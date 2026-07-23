@@ -1,0 +1,26 @@
+{
+  "data": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "email": "test@example.com",
+    "identityId": "00000000-0000-0000-0000-000000000002",
+    "name": "Test",
+    "surname": "User",
+    "address": "Via Roma, 1",
+    "cap": "00000",
+    "city": "Anytown ",
+    "province": "",
+    "telefono": "0000000000",
+    "updated": "2026-07-22T22:08:46.163632Z",
+    "language": "it-IT",
+    "country": "Italy",
+    "superAdmin": false,
+    "isDebuggable": false,
+    "privacyAccepted": true,
+    "marketingAccepted": false,
+    "appName": 1,
+    "userType": 0,
+    "vatNumber": ""
+  },
+  "message": "",
+  "errors": []
+}
