@@ -24,7 +24,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from .const import DOMAIN
+from .const import DOMAIN, EVSE_STATE_LABELS, EVSE_SYSTEM_ERROR_LABELS
 from .coordinator import DazeCoordinator
 from .entity import (
     DazeEvseEntity,
@@ -153,19 +153,29 @@ SOCKET_SENSOR_DESCRIPTIONS: tuple[DazeSocketSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda s: _ma_to_a(s.last_max_charging_current),
     ),
-    # lastStatus / evseState are vendor-internal enums with no known label mapping yet
-    # (only value 1 has been observed so far; the portal's locale JSON that might carry
-    # human-readable labels wasn't captured in our HAR sessions). Expose raw ints rather
-    # than guessing a mapping that could be wrong and need a breaking migration later.
+    # lastStatus (from /evses) and evseState (from /sockets/{serial}/remoteInfo) are the
+    # same underlying EVSE state enum, polled via two different endpoints - kept as two
+    # separate sensors since they can momentarily disagree between poll cycles.
     DazeSocketSensorEntityDescription(
         key="status",
         translation_key="status",
-        value_fn=lambda s: s.last_status,
+        device_class=SensorDeviceClass.ENUM,
+        options=list(EVSE_STATE_LABELS.values()),
+        value_fn=lambda s: EVSE_STATE_LABELS.get(s.last_status),
     ),
     DazeSocketSensorEntityDescription(
         key="evse_state",
         translation_key="evse_state",
-        value_fn=lambda s: s.evse_state,
+        device_class=SensorDeviceClass.ENUM,
+        options=list(EVSE_STATE_LABELS.values()),
+        value_fn=lambda s: EVSE_STATE_LABELS.get(s.evse_state),
+    ),
+    DazeSocketSensorEntityDescription(
+        key="system_error",
+        translation_key="system_error",
+        device_class=SensorDeviceClass.ENUM,
+        options=list(EVSE_SYSTEM_ERROR_LABELS.values()),
+        value_fn=lambda s: EVSE_SYSTEM_ERROR_LABELS.get(s.evse_system_error),
     ),
     DazeSocketSensorEntityDescription(
         key="fan_status",

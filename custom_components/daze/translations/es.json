@@ -51,8 +51,59 @@
       "board_temperature": { "name": "Temperatura de la placa" },
       "case_temperature": { "name": "Temperatura de la carcasa" },
       "max_charging_current": { "name": "Corriente de carga máxima" },
-      "status": { "name": "Código de estado" },
-      "evse_state": { "name": "Código de estado del EVSE" },
+      "status": {
+        "name": "Estado",
+        "state": {
+          "unknown": "Desconocido",
+          "standby": "En espera",
+          "ev_connected_wait_auth": "Vehículo conectado, esperando autorización",
+          "charging": "Cargando",
+          "evse_error": "Error",
+          "ev_connected_authorized": "Vehículo conectado, autorizado",
+          "ev_connected_wait_power": "Vehículo conectado, esperando potencia",
+          "preparing": "Preparando",
+          "unavailable": "No disponible",
+          "finishing": "Finalizando",
+          "reserved": "Reservado",
+          "scheduled_pause": "En pausa (programada)",
+          "smart_tariff_pause": "En pausa (tarifa inteligente)"
+        }
+      },
+      "evse_state": {
+        "name": "Estado del EVSE",
+        "state": {
+          "unknown": "Desconocido",
+          "standby": "En espera",
+          "ev_connected_wait_auth": "Vehículo conectado, esperando autorización",
+          "charging": "Cargando",
+          "evse_error": "Error",
+          "ev_connected_authorized": "Vehículo conectado, autorizado",
+          "ev_connected_wait_power": "Vehículo conectado, esperando potencia",
+          "preparing": "Preparando",
+          "unavailable": "No disponible",
+          "finishing": "Finalizando",
+          "reserved": "Reservado",
+          "scheduled_pause": "En pausa (programada)",
+          "smart_tariff_pause": "En pausa (tarifa inteligente)"
+        }
+      },
+      "system_error": {
+        "name": "Error del sistema",
+        "state": {
+          "none": "Sin error",
+          "fault_rcm": "Fallo RCM",
+          "fault_rcm_test": "Fallo autotest RCM",
+          "cp_state_e": "Estado control pilot E",
+          "fault_contactor": "Fallo del contactor",
+          "cp_state_invalid": "Estado de control pilot no válido",
+          "overtemperature": "Sobretemperatura",
+          "overcurrent": "Sobrecorriente",
+          "fault_pivot": "Fallo pivot",
+          "triggered_rcbo": "RCBO disparado",
+          "evse_not_powered": "EVSE sin alimentación",
+          "board_l1_overtemp": "Sobretemperatura placa L1"
+        }
+      },
       "fan_status": { "name": "Estado del ventilador" },
       "wifi_ssid": { "name": "SSID Wi-Fi" },
       "software_version": { "name": "Versión de software" },

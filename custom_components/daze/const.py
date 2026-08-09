@@ -30,3 +30,41 @@ MAX_CONCURRENT_SOCKET_REQUESTS = 5
 # Cognito access tokens are short-lived (observed: 3600s). Refresh proactively
 # this many seconds before expiry rather than waiting for a 401.
 TOKEN_REFRESH_LEEWAY_SECONDS = 300
+
+# --- Vendor status enums ---
+# `lastStatus` (from /evses) and `evseState` (from /sockets/{serial}/remoteInfo) are the
+# same underlying EVSE state enum, cross-referenced against the official web app's
+# bundled source (not distributed with this integration - see CLAUDE.md). Keys are the
+# integer values observed on the wire; values are translation-key-safe identifiers, with
+# the actual display text living in strings.json / translations/*.json.
+EVSE_STATE_LABELS: dict[int, str] = {
+    0: "unknown",
+    1: "standby",
+    2: "ev_connected_wait_auth",
+    3: "charging",
+    4: "evse_error",
+    5: "ev_connected_authorized",
+    6: "ev_connected_wait_power",
+    7: "preparing",
+    8: "unavailable",
+    9: "finishing",
+    10: "reserved",
+    100: "scheduled_pause",
+    101: "smart_tariff_pause",
+}
+
+# `evseSystemError` / `lastEVSESystemError`.
+EVSE_SYSTEM_ERROR_LABELS: dict[int, str] = {
+    0: "none",
+    1: "fault_rcm",
+    2: "fault_rcm_test",
+    3: "cp_state_e",
+    4: "fault_contactor",
+    5: "cp_state_invalid",
+    6: "overtemperature",
+    7: "overcurrent",
+    8: "fault_pivot",
+    9: "triggered_rcbo",
+    10: "evse_not_powered",
+    11: "board_l1_overtemp",
+}

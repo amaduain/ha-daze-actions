@@ -21,7 +21,7 @@ Per charging socket:
 - Charging current and AC voltage per phase (L1/L2/L3, when the installation is three-phase)
 - Board and case temperature
 - Fan status
-- Raw status / EVSE state codes (not yet mapped to human-readable labels - see [Limitations](#limitations))
+- Status, EVSE state, and system error, decoded to human-readable values
 
 Per wallbox (diagnostic):
 
@@ -62,8 +62,10 @@ Polling interval (default 60s) can be adjusted afterwards from the integration's
 ## Limitations
 
 - No charge start/stop or eco mode control yet (planned for a later release).
-- `status`/`evse_state` sensors expose raw vendor integer codes: the mapping to human-readable states (charging, available, error, ...).
-  Contributions with observed value/state pairs are welcome.
+- `status`/`evse_state`/`system_error` labels were cross-referenced against the official web app's
+  source and cover every value defined there, but only a handful have actually been observed live
+  (mostly `standby`/`none`). If you see a sensor fall back to `unknown`, please open an issue with
+  the raw value.
 - Authenticates against the same AWS Cognito app client the web portal uses, via direct `USER_PASSWORD_AUTH` (no browser/webview involved).
   If Daze disables that auth flow this integration will need rework.
 

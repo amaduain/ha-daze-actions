@@ -45,12 +45,26 @@ def test_voltage_passthrough_no_conversion(evses_data):
     assert _by_key(SOCKET_SENSOR_DESCRIPTIONS, "voltage_l1").value_fn(socket) == 229
 
 
-def test_raw_status_enums_exposed_unmapped(evses_data, remote_info_data):
+def test_status_and_evse_state_mapped_to_labels(evses_data, remote_info_data):
     evse = DazeEvse.from_dict(evses_data[0])
     socket = evse.sockets[0]
     socket.apply_remote_info(remote_info_data)
-    assert _by_key(SOCKET_SENSOR_DESCRIPTIONS, "status").value_fn(socket) == socket.last_status
-    assert _by_key(SOCKET_SENSOR_DESCRIPTIONS, "evse_state").value_fn(socket) == 1
+    assert _by_key(SOCKET_SENSOR_DESCRIPTIONS, "status").value_fn(socket) == "standby"
+    assert _by_key(SOCKET_SENSOR_DESCRIPTIONS, "evse_state").value_fn(socket) == "standby"
+
+
+def test_status_unknown_value_maps_to_none(evses_data):
+    evse = DazeEvse.from_dict(evses_data[0])
+    socket = evse.sockets[0]
+    socket.last_status = 999  # not a known EVSE state code
+    assert _by_key(SOCKET_SENSOR_DESCRIPTIONS, "status").value_fn(socket) is None
+
+
+def test_system_error_mapped_to_label(evses_data, remote_info_data):
+    evse = DazeEvse.from_dict(evses_data[0])
+    socket = evse.sockets[0]
+    socket.apply_remote_info(remote_info_data)
+    assert _by_key(SOCKET_SENSOR_DESCRIPTIONS, "system_error").value_fn(socket) == "none"
 
 
 def test_l2_l3_descriptions_flagged_for_three_phase_gating():
