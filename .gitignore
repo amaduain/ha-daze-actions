@@ -9,3 +9,6 @@ __pycache__/
 # IDE project files
 .idea/
 *.iml
+
+# temporary files, never commit it.
+tmp/

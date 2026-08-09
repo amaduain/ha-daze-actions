@@ -36,7 +36,10 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 async def _authenticate(
     hass, email: str, password: str
 ) -> tuple[TokenSet, dict[str, Any]]:
-    """Log in and fetch the profile in one go. Raises DazeInvalidAuthError/DazeCannotConnectError."""
+    """Log in and fetch the profile in one go.
+
+    Raises DazeInvalidAuthError/DazeCannotConnectError.
+    """
     session = async_get_clientsession(hass)
     auth = DazeAuth(session, CognitoDirectAuthStrategy())
     tokens = await auth.async_login(email, password)
@@ -124,7 +127,7 @@ class DazeConfigFlow(ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> "DazeOptionsFlow":
+    def async_get_options_flow(config_entry: ConfigEntry) -> DazeOptionsFlow:
         return DazeOptionsFlow(config_entry)
 
 

@@ -15,8 +15,9 @@ never know which strategy is in use.
 from __future__ import annotations
 
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Protocol
+from typing import Any, Protocol
 
 import aiohttp
 
@@ -58,7 +59,7 @@ class TokenSet:
         }
 
     @classmethod
-    def from_dict(cls, raw: dict[str, Any]) -> "TokenSet":
+    def from_dict(cls, raw: dict[str, Any]) -> TokenSet:
         return cls(
             access_token=raw["access_token"],
             id_token=raw["id_token"],
@@ -77,7 +78,9 @@ class DazeAuthStrategy(Protocol):
     ) -> TokenSet: ...
 
 
-def _auth_result_to_token_set(auth_result: dict[str, Any], *, fallback_refresh_token: str | None = None) -> TokenSet:
+def _auth_result_to_token_set(
+    auth_result: dict[str, Any], *, fallback_refresh_token: str | None = None
+) -> TokenSet:
     now = time.time()
     refresh_token = auth_result.get("RefreshToken", fallback_refresh_token)
     if refresh_token is None:

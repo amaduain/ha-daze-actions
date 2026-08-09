@@ -17,7 +17,7 @@ class DazeCurrency:
     symbol: str | None
 
     @classmethod
-    def from_dict(cls, raw: dict | None) -> "DazeCurrency":
+    def from_dict(cls, raw: dict | None) -> DazeCurrency:
         raw = raw or {}
         return cls(code=raw.get("code"), symbol=raw.get("symbol"))
 
@@ -41,7 +41,7 @@ class DazeNetwork:
     num_evses_in_network: int | None
 
     @classmethod
-    def from_dict(cls, raw: dict) -> "DazeNetwork":
+    def from_dict(cls, raw: dict) -> DazeNetwork:
         return cls(
             uid=raw["uid"],
             name=raw.get("name"),
@@ -91,7 +91,7 @@ class DazeSocket:
     active: bool | None = None
 
     @classmethod
-    def from_dict(cls, raw: dict) -> "DazeSocket":
+    def from_dict(cls, raw: dict) -> DazeSocket:
         return cls(
             id=raw["id"],
             serial_number=raw["serialNumber"],
@@ -142,7 +142,7 @@ class DazeEvse:
     sockets: list[DazeSocket] = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, raw: dict) -> "DazeEvse":
+    def from_dict(cls, raw: dict) -> DazeEvse:
         return cls(
             serial_number=raw["serialNumber"],
             evse_name=raw.get("evseName"),

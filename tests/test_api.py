@@ -14,7 +14,9 @@ from custom_components.daze.const import WEBAPI_BASE_URL
 
 
 def _fresh_auth(session, token: str = "valid-token") -> DazeAuth:
-    tokens = TokenSet(access_token=token, id_token="i", refresh_token="r", expires_at=time.time() + 3600)
+    tokens = TokenSet(
+        access_token=token, id_token="i", refresh_token="r", expires_at=time.time() + 3600
+    )
     strategy = AsyncMock()
     return DazeAuth(session, strategy, tokens=tokens)
 
@@ -90,7 +92,9 @@ async def test_401_triggers_single_refresh_then_succeeds(hass, aioclient_mock, u
 
     session = aioclient_mock.create_session(hass.loop)
     try:
-        tokens = TokenSet(access_token="expired", id_token="i", refresh_token="r", expires_at=time.time() + 3600)
+        tokens = TokenSet(
+            access_token="expired", id_token="i", refresh_token="r", expires_at=time.time() + 3600
+        )
         strategy = AsyncMock()
         strategy.async_refresh.return_value = TokenSet(
             access_token="renewed", id_token="i", refresh_token="r", expires_at=time.time() + 3600
@@ -112,7 +116,9 @@ async def test_401_twice_raises_config_entry_auth_failed(hass, aioclient_mock):
 
     session = aioclient_mock.create_session(hass.loop)
     try:
-        tokens = TokenSet(access_token="expired", id_token="i", refresh_token="r", expires_at=time.time() + 3600)
+        tokens = TokenSet(
+            access_token="expired", id_token="i", refresh_token="r", expires_at=time.time() + 3600
+        )
         strategy = AsyncMock()
         strategy.async_refresh.return_value = TokenSet(
             access_token="still-bad", id_token="i", refresh_token="r", expires_at=time.time() + 3600

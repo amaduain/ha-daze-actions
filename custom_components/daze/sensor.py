@@ -309,7 +309,9 @@ class DazeNetworkTariffSensor(DazeNetworkEntity, SensorEntity):
     _attr_translation_key = "tariff"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(self, coordinator: DazeCoordinator, network_uid: str, network: DazeNetwork) -> None:
+    def __init__(
+        self, coordinator: DazeCoordinator, network_uid: str, network: DazeNetwork
+    ) -> None:
         super().__init__(coordinator, network_uid)
         self._attr_unique_id = f"{network_uid}_tariff"
         self._attr_device_info = network_device_info(network)

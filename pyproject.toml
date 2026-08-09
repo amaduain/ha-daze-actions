@@ -21,4 +21,14 @@ dev = [
     "boto3",
     "pycognito",
     "requests",
+    # Lint/format.
+    "ruff",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+

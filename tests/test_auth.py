@@ -14,7 +14,9 @@ from custom_components.daze.auth import (
 
 
 def test_token_set_needs_refresh():
-    fresh = TokenSet(access_token="a", id_token="i", refresh_token="r", expires_at=time.time() + 3600)
+    fresh = TokenSet(
+        access_token="a", id_token="i", refresh_token="r", expires_at=time.time() + 3600
+    )
     assert fresh.needs_refresh is False
 
     stale = TokenSet(access_token="a", id_token="i", refresh_token="r", expires_at=time.time() + 60)

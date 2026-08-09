@@ -56,7 +56,9 @@ class DazeApiClient:
                         return None
                     if resp.status >= 400:
                         text = await resp.text()
-                        raise DazeCannotConnectError(f"{method} {path} -> HTTP {resp.status}: {text[:300]}")
+                        raise DazeCannotConnectError(
+                            f"{method} {path} -> HTTP {resp.status}: {text[:300]}"
+                        )
                     payload = await resp.json()
                     return payload.get("data")
             except aiohttp.ClientError as err:

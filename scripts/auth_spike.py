@@ -71,7 +71,7 @@ def try_user_password_auth(email: str, password: str) -> dict | None:
         return None
 
     if "ChallengeName" in resp:
-        print(f"  Got a challenge instead of tokens: {resp['ChallengeName']} (not handled by this spike)")
+        print(f"  Got a challenge instead of tokens: {resp['ChallengeName']} (not handled)")
         return None
 
     result = resp["AuthenticationResult"]
