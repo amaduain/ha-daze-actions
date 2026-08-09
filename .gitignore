@@ -12,3 +12,6 @@ __pycache__/
 
 # temporary files, never commit it.
 tmp/
+
+# Local Claude Code guidance, kept out of the public repo on purpose.
+CLAUDE.md
