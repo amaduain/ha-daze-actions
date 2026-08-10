@@ -1,0 +1,59 @@
+# git-cliff configuration - generates the GitHub Release body from conventional
+# commits (see .github/workflows/release.yml).
+#
+# That body is what Home Assistant users actually read: HACS creates the
+# `update.*` entity for this repository and renders the release description as
+# the release notes in the update dialog. Keep the output short, user-facing and
+# free of internal churn - hence the aggressive `skip = true` parsers below.
+#
+# Preview the notes for the next release locally with:
+#   git cliff --unreleased --strip all
+
+[changelog]
+header = ""
+# `trim = true` strips the leading indentation of every line, so the template can
+# be indented for readability without leaking whitespace into the markdown.
+trim = true
+body = """
+{% for group, commits in commits | group_by(attribute="group") %}
+    ### {{ group | upper_first }}
+    {% for commit in commits %}
+        - {% if commit.breaking %}[**breaking**] {% endif %}\
+            {{ commit.message | upper_first }}\
+    {% endfor %}
+{% endfor %}\
+{% if commits | length == 0 %}
+    Maintenance release, no user-facing changes.
+{% endif %}\
+{% if previous.version %}
+    **Full changelog**: https://github.com/rdndnl/ha-daze/compare/{{ previous.version }}...{{ version }}
+{% endif %}\
+"""
+footer = ""
+# The `<!-- N -->` prefixes on the group names below exist only to force the
+# section order (groups are sorted alphabetically); strip them from the output so
+# nothing depends on the renderer hiding HTML comments.
+postprocessors = [{ pattern = '<!-- [0-9]+ -->', replace = "" }]
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+# A `feat!:`/`BREAKING CHANGE:` commit is always listed, even if its type is
+# otherwise skipped.
+protect_breaking_commits = true
+tag_pattern = "v[0-9]*"
+sort_commits = "oldest"
+commit_parsers = [
+    { message = "^feat", group = "<!-- 0 -->Features" },
+    { message = "^fix", group = "<!-- 1 -->Bug fixes" },
+    { message = "^perf", group = "<!-- 2 -->Performance" },
+    { message = "^revert", group = "<!-- 3 -->Reverts" },
+    # Internal-only work: never shown to users in the update dialog.
+    { message = "^docs", skip = true },
+    { message = "^test", skip = true },
+    { message = "^chore", skip = true },
+    { message = "^ci", skip = true },
+    { message = "^build", skip = true },
+    { message = "^style", skip = true },
+    { message = "^refactor", skip = true },
+]
