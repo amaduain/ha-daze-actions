@@ -34,13 +34,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     api = DazeApiClient(session, auth)
 
-    scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL.total_seconds())
     coordinator = DazeCoordinator(
         hass,
         api,
         email=entry.data[CONF_EMAIL],
         identity_id=entry.unique_id,
-        update_interval=timedelta(seconds=scan_interval),
+        update_interval=_scan_interval(entry),
     )
     await coordinator.async_config_entry_first_refresh()
 
@@ -51,8 +50,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
+def _scan_interval(entry: ConfigEntry) -> timedelta:
+    return timedelta(
+        seconds=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL.total_seconds())
+    )
+
+
 async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    await hass.config_entries.async_reload(entry.entry_id)
+    """Apply an entry update in place - never reload from here.
+
+    This listener fires on *any* async_update_entry, including the token refresh
+    persisted by _async_persist_tokens roughly every 55 min (3600s token lifetime
+    minus TOKEN_REFRESH_LEEWAY_SECONDS). Reloading the entry there tore down and
+    rebuilt every device/entity, so all sensors flickered to `unavailable` for
+    about a second on each token refresh. The only user-configurable setting is
+    the scan interval, which the coordinator can adopt live.
+    """
+    coordinator: DazeCoordinator = hass.data[DOMAIN][entry.entry_id]
+    scan_interval = _scan_interval(entry)
+    if coordinator.update_interval == scan_interval:
+        return
+    coordinator.update_interval = scan_interval
+    # The setter alone doesn't touch the already-scheduled timer; refreshing now
+    # reschedules the next poll with the new interval.
+    await coordinator.async_request_refresh()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
