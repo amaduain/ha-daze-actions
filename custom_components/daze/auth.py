@@ -21,7 +21,12 @@ from typing import Any, Protocol
 
 import aiohttp
 
-from .const import COGNITO_CLIENT_ID, COGNITO_REGION, TOKEN_REFRESH_LEEWAY_SECONDS
+from .const import (
+    COGNITO_CLIENT_ID,
+    COGNITO_REGION,
+    REQUEST_TIMEOUT,
+    TOKEN_REFRESH_LEEWAY_SECONDS,
+)
 from .exceptions import DazeAuthError, DazeCannotConnectError, DazeInvalidAuthError
 
 COGNITO_IDP_ENDPOINT = f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com/"
@@ -112,7 +117,7 @@ class CognitoDirectAuthStrategy:
                     "Content-Type": "application/x-amz-json-1.1",
                     "X-Amz-Target": f"AWSCognitoIdentityProviderService.{target}",
                 },
-                timeout=aiohttp.ClientTimeout(total=15),
+                timeout=REQUEST_TIMEOUT,
             ) as resp:
                 try:
                     payload = await resp.json(content_type=None)
@@ -128,6 +133,16 @@ class CognitoDirectAuthStrategy:
                         raise DazeInvalidAuthError(message)
                     raise DazeCannotConnectError(f"{error_type}: {message}")
                 return payload
+        except TimeoutError as err:
+            # DazeCannotConnectError, *not* a DazeAuthError - the hierarchy keeps them
+            # apart on purpose. A Cognito call that times out is a network problem, and
+            # mapping it onto the auth branch would make api._request turn it into
+            # ConfigEntryAuthFailed and prompt the user to re-enter their password over
+            # a transient blip. See the TimeoutError branch in api._request for why
+            # aiohttp.ClientError alone does not cover this.
+            raise DazeCannotConnectError(
+                f"Cognito {target} timed out after {REQUEST_TIMEOUT.total}s"
+            ) from err
         except aiohttp.ClientError as err:
             raise DazeCannotConnectError(str(err)) from err
 

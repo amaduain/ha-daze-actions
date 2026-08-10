@@ -38,7 +38,12 @@ async def _authenticate(
 ) -> tuple[TokenSet, dict[str, Any]]:
     """Log in and fetch the profile in one go.
 
-    Raises DazeInvalidAuthError/DazeCannotConnectError.
+    Raises DazeInvalidAuthError/DazeCannotConnectError. auth.py and api.py already
+    normalise timeouts into DazeCannotConnectError, but both callers below also catch
+    TimeoutError explicitly: async_step_reauth_confirm has no `except Exception` safety
+    net, so anything that slips through there escapes the flow handler and Home
+    Assistant aborts the reauth with an opaque unknown error instead of letting the
+    user retry.
     """
     session = async_get_clientsession(hass)
     auth = DazeAuth(session, CognitoDirectAuthStrategy())
@@ -65,7 +70,7 @@ class DazeConfigFlow(ConfigFlow, domain=DOMAIN):
                 tokens, profile = await _authenticate(self.hass, email, password)
             except DazeInvalidAuthError:
                 errors["base"] = "invalid_auth"
-            except (DazeCannotConnectError, aiohttp.ClientError):
+            except (DazeCannotConnectError, aiohttp.ClientError, TimeoutError):
                 errors["base"] = "cannot_connect"
             except Exception:
                 _LOGGER.exception("Unexpected error during Daze config flow")
@@ -102,7 +107,7 @@ class DazeConfigFlow(ConfigFlow, domain=DOMAIN):
                 tokens, profile = await _authenticate(self.hass, email, password)
             except DazeInvalidAuthError:
                 errors["base"] = "invalid_auth"
-            except (DazeCannotConnectError, aiohttp.ClientError):
+            except (DazeCannotConnectError, aiohttp.ClientError, TimeoutError):
                 errors["base"] = "cannot_connect"
             else:
                 if profile["identityId"] != self._reauth_entry.unique_id:

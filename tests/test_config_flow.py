@@ -4,6 +4,7 @@ import pytest
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.data_entry_flow import FlowResultType
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.daze.auth import COGNITO_IDP_ENDPOINT
 from custom_components.daze.const import CONF_TOKEN, DOMAIN, WEBAPI_BASE_URL
@@ -80,6 +81,62 @@ async def test_user_flow_cannot_connect(hass, aioclient_mock):
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         {CONF_EMAIL: "a@b.com", CONF_PASSWORD: "pw"},
+    )
+
+    assert result["type"] == FlowResultType.FORM
+    assert result["errors"] == {"base": "cannot_connect"}
+
+
+async def test_user_flow_timeout_is_cannot_connect(hass, aioclient_mock):
+    """A timeout while logging in is a connectivity problem, not an "unknown" error.
+
+    It used to fall through to the generic `except Exception`, so the user was told
+    something unexpected had happened and a full traceback was logged for what is just
+    a slow network.
+    """
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    aioclient_mock.post(COGNITO_IDP_ENDPOINT, exc=TimeoutError())
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_EMAIL: "a@b.com", CONF_PASSWORD: "pw"},
+    )
+
+    assert result["type"] == FlowResultType.FORM
+    assert result["errors"] == {"base": "cannot_connect"}
+
+
+async def test_reauth_flow_timeout_is_cannot_connect(hass, aioclient_mock):
+    """The reauth step has no `except Exception` net, so a timeout used to escape it.
+
+    When that happened Home Assistant aborted the whole reauth flow with an opaque
+    unknown error and the user had no way to retry short of removing the entry.
+    """
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="identity-1",
+        data={
+            CONF_EMAIL: "a@b.com",
+            CONF_PASSWORD: "pw",
+            CONF_TOKEN: {
+                "access_token": "at",
+                "id_token": "it",
+                "refresh_token": "rt",
+                "expires_at": 9_999_999_999,
+            },
+        },
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reauth_flow(hass)
+    assert result["type"] == FlowResultType.FORM
+    assert result["step_id"] == "reauth_confirm"
+
+    aioclient_mock.post(COGNITO_IDP_ENDPOINT, exc=TimeoutError())
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_PASSWORD: "pw"}
     )
 
     assert result["type"] == FlowResultType.FORM

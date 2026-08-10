@@ -68,5 +68,16 @@ class DazeCoordinator(DataUpdateCoordinator[DazeAccountData]):
                     socket.apply_remote_info(remote_info)
 
         sockets = [socket for evse in evses for socket in evse.sockets]
-        if sockets:
-            await asyncio.gather(*(_fetch(socket) for socket in sockets))
+        if not sockets:
+            return
+
+        # return_exceptions=True so a single failing socket does not leave its siblings
+        # running detached: a bare gather() propagates the first exception immediately
+        # without cancelling the rest, and those orphans then surface as "Task exception
+        # was never retrieved" in the log long after the update was abandoned.
+        results = await asyncio.gather(
+            *(_fetch(socket) for socket in sockets), return_exceptions=True
+        )
+        for result in results:
+            if isinstance(result, BaseException):
+                raise result

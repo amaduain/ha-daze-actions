@@ -9,8 +9,13 @@ from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClien
 from yarl import URL
 
 from custom_components.daze.api import DazeApiClient, DazeCannotConnectError
-from custom_components.daze.auth import DazeAuth, TokenSet
-from custom_components.daze.const import WEBAPI_BASE_URL
+from custom_components.daze.auth import (
+    COGNITO_IDP_ENDPOINT,
+    CognitoDirectAuthStrategy,
+    DazeAuth,
+    TokenSet,
+)
+from custom_components.daze.const import REQUEST_TIMEOUT_RETRIES, WEBAPI_BASE_URL
 
 
 def _fresh_auth(session, token: str = "valid-token") -> DazeAuth:
@@ -127,6 +132,118 @@ async def test_401_twice_raises_config_entry_auth_failed(hass, aioclient_mock):
         api = DazeApiClient(session, auth)
 
         with pytest.raises(ConfigEntryAuthFailed):
+            await api.async_get_user_profile("a@b.com")
+    finally:
+        await session.close()
+
+
+async def test_timeout_raises_cannot_connect(hass, aioclient_mock):
+    """Timeouts must leave api.py as DazeCannotConnectError, like any other network fault.
+
+    asyncio.TimeoutError is the builtin TimeoutError on 3.11+ and is *not* an
+    aiohttp.ClientError, so before _request grew an explicit branch for it a timeout
+    escaped the module untouched - config_flow reported "unknown" instead of
+    "cannot_connect", and the coordinator only caught it via HA's generic fallback.
+    """
+    aioclient_mock.get(
+        f"{WEBAPI_BASE_URL}/v3/users/a%40b.com/",
+        params={"appName": 1},
+        exc=TimeoutError(),
+    )
+    session = aioclient_mock.create_session(hass.loop)
+    try:
+        api = DazeApiClient(session, _fresh_auth(session))
+        with pytest.raises(DazeCannotConnectError, match="timed out"):
+            await api.async_get_user_profile("a@b.com")
+    finally:
+        await session.close()
+
+    assert len(aioclient_mock.mock_calls) == REQUEST_TIMEOUT_RETRIES + 1
+
+
+async def test_timeout_is_retried_then_succeeds(hass, aioclient_mock, user_profile_data):
+    url = URL(f"{WEBAPI_BASE_URL}/v3/users/a%40b.com/").with_query({"appName": 1})
+    timed_out = AiohttpClientMockResponse(method="get", url=url, exc=TimeoutError())
+    ok_response = AiohttpClientMockResponse(
+        method="get",
+        url=url,
+        json={"data": user_profile_data, "message": "", "errors": []},
+    )
+    aioclient_mock.get(url, side_effect=_sequential_responses(timed_out, ok_response))
+
+    session = aioclient_mock.create_session(hass.loop)
+    try:
+        api = DazeApiClient(session, _fresh_auth(session))
+        profile = await api.async_get_user_profile("a@b.com")
+    finally:
+        await session.close()
+
+    assert profile["identityId"] == user_profile_data["identityId"]
+    assert len(aioclient_mock.mock_calls) == 2
+
+
+async def test_timeout_and_401_retry_budgets_are_independent(
+    hass, aioclient_mock, user_profile_data
+):
+    """A timeout must not consume the single forced-refresh attempt reserved for a 401."""
+    url = URL(f"{WEBAPI_BASE_URL}/v3/users/a%40b.com/").with_query({"appName": 1})
+    timed_out = AiohttpClientMockResponse(method="get", url=url, exc=TimeoutError())
+    unauthorized_response = AiohttpClientMockResponse(method="get", url=url, status=401)
+    ok_response = AiohttpClientMockResponse(
+        method="get",
+        url=url,
+        json={"data": user_profile_data, "message": "", "errors": []},
+    )
+    aioclient_mock.get(
+        url,
+        side_effect=_sequential_responses(timed_out, unauthorized_response, ok_response),
+    )
+
+    session = aioclient_mock.create_session(hass.loop)
+    try:
+        strategy = AsyncMock()
+        strategy.async_refresh.return_value = TokenSet(
+            access_token="renewed", id_token="i", refresh_token="r", expires_at=time.time() + 3600
+        )
+        auth = DazeAuth(
+            session,
+            strategy,
+            tokens=TokenSet(
+                access_token="expired",
+                id_token="i",
+                refresh_token="r",
+                expires_at=time.time() + 3600,
+            ),
+        )
+        api = DazeApiClient(session, auth)
+
+        profile = await api.async_get_user_profile("a@b.com")
+    finally:
+        await session.close()
+
+    assert profile["identityId"] == user_profile_data["identityId"]
+    strategy.async_refresh.assert_called_once()
+    assert len(aioclient_mock.mock_calls) == 3
+
+
+async def test_timeout_during_token_refresh_does_not_trigger_reauth(hass, aioclient_mock):
+    """A Cognito refresh that times out is a network fault, not an auth failure.
+
+    DazeCannotConnectError is deliberately not a DazeAuthError: if it were, _request
+    would map it onto ConfigEntryAuthFailed and HA would ask the user to re-enter their
+    password over a transient network blip.
+    """
+    aioclient_mock.post(COGNITO_IDP_ENDPOINT, exc=TimeoutError())
+
+    session = aioclient_mock.create_session(hass.loop)
+    try:
+        expired = TokenSet(
+            access_token="stale", id_token="i", refresh_token="r", expires_at=time.time() - 1
+        )
+        auth = DazeAuth(session, CognitoDirectAuthStrategy(), tokens=expired)
+        api = DazeApiClient(session, auth)
+
+        with pytest.raises(DazeCannotConnectError, match="timed out"):
             await api.async_get_user_profile("a@b.com")
     finally:
         await session.close()

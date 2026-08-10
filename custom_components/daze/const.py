@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+import aiohttp
+
 DOMAIN = "daze"
 
 # --- Cognito / OAuth ---
@@ -14,6 +16,18 @@ COGNITO_CLIENT_ID = "4m0rp7oqarbrc3hn67ivvonba8"
 
 # --- REST backend ---
 WEBAPI_BASE_URL = "https://webapi.dazeservice.com"
+
+# Timeout applied to every outbound call, REST and Cognito alike. `connect` is
+# deliberately lower than `total`: the failure mode actually observed in the wild is a
+# TCP/TLS connect that hangs (aiohttp gives up inside `create_connection`, never having
+# sent a byte), so there is no point spending the whole budget on a socket that is not
+# coming up - leave some of it for a request that did reach the server.
+REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=15, connect=10)
+
+# Immediate in-request retries after a timeout. Kept at 1 on purpose: the coordinator
+# already retries the whole fetch tree every scan interval, and each retry adds up to
+# another `REQUEST_TIMEOUT.total` to the worst-case duration of a poll cycle.
+REQUEST_TIMEOUT_RETRIES = 1
 
 # --- Config entry data/options keys ---
 # CONF_EMAIL/CONF_PASSWORD are homeassistant.const's, reused as-is (not redefined here).
