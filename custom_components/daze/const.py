@@ -33,10 +33,9 @@ TOKEN_REFRESH_LEEWAY_SECONDS = 300
 
 # --- Vendor status enums ---
 # `lastStatus` (from /evses) and `evseState` (from /sockets/{serial}/remoteInfo) are the
-# same underlying EVSE state enum, cross-referenced against the official web app's
-# bundled source (not distributed with this integration - see CLAUDE.md). Keys are the
-# integer values observed on the wire; values are translation-key-safe identifiers, with
-# the actual display text living in strings.json / translations/*.json.
+# same underlying EVSE state enum. Keys are the integer values observed on the wire;
+# values are translation-key-safe identifiers, with the actual display text living
+# in strings.json / translations/*.json.
 EVSE_STATE_LABELS: dict[int, str] = {
     0: "unknown",
     1: "standby",

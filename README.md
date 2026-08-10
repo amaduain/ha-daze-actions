@@ -4,6 +4,8 @@ Home Assistant custom integration for Daze EV charging products (Dazebox)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=rdndnl&amp;repository=ha-daze&amp;category=Integration" target="_blank" rel="noreferrer noopener"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Home Assistant Community Store."></a>
+
 Home Assistant custom integration that exposes sensor data from a [Daze](https://www.dazeservice.com/) EV wallbox charger,
 read from the same backend used by the official [webportal.dazeservice.com](https://webportal.dazeservice.com/) web app.
 
@@ -41,7 +43,15 @@ Per site ("network" in Daze's terminology):
 
 ### Via HACS (custom repository)
 
-This integration is not in the default HACS store. Add it as a custom repository:
+This integration is not in the default HACS store, so it has to be added as a custom repository.
+
+The quickest way is this button, which opens the repository directly in your own Home Assistant's HACS:
+
+<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=rdndnl&amp;repository=ha-daze&amp;category=Integration" target="_blank" rel="noreferrer noopener"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Home Assistant Community Store."></a>
+
+Then click **Download**, and restart Home Assistant.
+
+Manually, instead:
 
 1. HACS → the `⋮` menu (top right) → **Custom repositories**
 2. Repository: `https://github.com/rdndnl/ha-daze`, Category: **Integration**
