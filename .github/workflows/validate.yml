@@ -30,3 +30,40 @@ jobs:
 
       - name: Hassfest validation
         uses: home-assistant/actions/hassfest@master
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Pinned to an exact tag on purpose: setup-uv stopped publishing floating
+      # major tags after v7, so `@v9` does not resolve at all.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+
+      # `--locked` fails the run rather than quietly rewriting uv.lock, so CI
+      # tests the exact dependency versions everyone resolves locally. If this
+      # step fails with "the lockfile needs to be updated", the lock has drifted
+      # from pyproject.toml: run `uv lock` and commit the result. A version bump
+      # is the usual cause - it changes the `daze` entry in the lock too.
+      #
+      # Python itself needs no setup step: uv reads .python-version (3.14) and
+      # downloads a matching interpreter on its own.
+      - name: Install dependencies
+        run: uv sync --locked
+
+      # `python -m pytest`, not bare `uv run pytest` - the latter doesn't put the
+      # repo root on sys.path, so `custom_components` isn't importable and
+      # collection fails before a single test runs.
+      - name: Run tests
+        run: uv run python -m pytest tests/ -q
+
+      # `ruff check` only. Never add `ruff format --check` here: the pinned ruff
+      # build strips the required parentheses from multi-exception
+      # `except (A, B):` clauses (see config_flow.py), producing invalid Python.
+      - name: Lint
+        run: uv run ruff check .
