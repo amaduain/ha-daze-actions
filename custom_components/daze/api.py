@@ -1,12 +1,4 @@
-"""REST client for the Daze backend (webapi.dazeservice.com).
-
-No auth strategy logic here - that lives in auth.py. This module only knows how to
-shape requests/responses and how to react to a 401 (refresh once via DazeAuth, retry
-once, then give up and let the caller's config entry go into reauth).
-
-Every connectivity failure leaves this module as a DazeCannotConnectError - that is the
-contract callers rely on. Timeouts included: see the TimeoutError branch in _request.
-"""
+"""REST client for the Daze backend (webapi.dazeservice.com)."""
 
 from __future__ import annotations
 
@@ -24,6 +16,9 @@ from .models import DazeEvse, DazeNetwork
 
 _LOGGER = logging.getLogger(__name__)
 
+RECHARGE_MODALITY_STANDARD = 1
+RECHARGE_MODALITY_SELFCONSUMPTION = 2
+
 
 class DazeApiClient:
     def __init__(self, session: aiohttp.ClientSession, auth: DazeAuth) -> None:
@@ -31,13 +26,7 @@ class DazeApiClient:
         self._auth = auth
 
     async def _request(self, method: str, path: str, **kwargs: Any) -> Any:
-        """Perform one authenticated REST call.
-
-        Two retry budgets, deliberately kept separate: `refreshed` allows exactly one
-        forced token refresh + retry on a 401, `retries_left` allows a few immediate
-        retries on a timeout. A timeout is a transient network fault, not an auth
-        problem, so it must not eat the 401 budget (and vice versa).
-        """
+        """Perform one authenticated REST call with auth and timeout retries."""
         url = f"{WEBAPI_BASE_URL}{path}"
         refreshed = False
         retries_left = REQUEST_TIMEOUT_RETRIES
@@ -74,17 +63,11 @@ class DazeApiClient:
                         raise DazeCannotConnectError(
                             f"{method} {path} -> HTTP {resp.status}: {text[:300]}"
                         )
+                    if resp.content_length == 0:
+                        return None
                     payload = await resp.json()
                     return payload.get("data")
             except TimeoutError as err:
-                # asyncio.TimeoutError *is* the builtin TimeoutError on 3.11+, and it is
-                # NOT an aiohttp.ClientError - so without this branch a timeout escaped
-                # _request entirely, breaking the "connectivity failure ->
-                # DazeCannotConnectError" contract: config_flow fell through to its
-                # generic `except Exception` (or, in the reauth step, to nothing at all)
-                # and the coordinator only caught it via Home Assistant's own fallback.
-                # Must come before aiohttp.ClientError: aiohttp.ServerTimeoutError
-                # inherits from both, and this branch gives it the better message.
                 if retries_left:
                     retries_left -= 1
                     _LOGGER.debug(
@@ -117,4 +100,23 @@ class DazeApiClient:
             "GET",
             f"/v3/sockets/{serial_number}/remoteInfo",
             params={"includeEcoInfo": "true", "includeNextSchedule": "true"},
+        )
+
+    async def async_set_recharge_modality(self, evse_serial: str, mode: int) -> None:
+        """Set the Daze recharge modality: 1=standard, 2=self-consumption."""
+        await self._request(
+            "PUT",
+            f"/v3/evses/{evse_serial}/rechargeModality",
+            json={"newRechargeModality": mode, "sendRpcToDevice": True},
+        )
+
+    async def async_set_max_charging_current(self, evse_serial: str, milliamps: int) -> None:
+        """Set maximum external charging current in milliamps."""
+        await self._request(
+            "POST",
+            f"/v3/evses/{evse_serial}/configurations/maxExternalChargingCurrent",
+            json={
+                "evseSerialNumber": evse_serial,
+                "maxExternalChargingCurrentInMilliAmps": milliamps,
+            },
         )

@@ -1,117 +1,23 @@
 {
   "config": {
     "step": {
-      "user": {
-        "title": "Connect to Daze",
-        "description": "Enter the credentials you use to log in at webportal.dazeservice.com. They are stored so the integration can re-authenticate if your session expires.",
-        "data": {
-          "email": "Email",
-          "password": "Password"
-        }
-      },
-      "reauth_confirm": {
-        "title": "Re-authenticate with Daze",
-        "description": "Your Daze session could not be renewed automatically. Enter your password again.",
-        "data": {
-          "password": "Password"
-        }
-      }
+      "user": {"title": "Connect to Daze", "description": "Enter the credentials you use to log in at webportal.dazeservice.com. They are stored so the integration can re-authenticate if your session expires.", "data": {"email": "Email", "password": "Password"}},
+      "reauth_confirm": {"title": "Re-authenticate with Daze", "description": "Your Daze session could not be renewed automatically. Enter your password again.", "data": {"password": "Password"}}
     },
-    "error": {
-      "invalid_auth": "Invalid email or password.",
-      "cannot_connect": "Could not connect to the Daze backend.",
-      "wrong_account": "These credentials belong to a different Daze account than the one being re-authenticated.",
-      "unknown": "Unexpected error."
-    },
-    "abort": {
-      "already_configured": "This Daze account is already configured.",
-      "reauth_successful": "Re-authentication was successful."
-    }
+    "error": {"invalid_auth": "Invalid email or password.", "cannot_connect": "Could not connect to the Daze backend.", "wrong_account": "These credentials belong to a different Daze account than the one being re-authenticated.", "unknown": "Unexpected error."},
+    "abort": {"already_configured": "This Daze account is already configured.", "reauth_successful": "Re-authentication was successful."}
   },
-  "options": {
-    "step": {
-      "init": {
-        "description": "How often to poll the Daze backend for updated sensor values.",
-        "data": {
-          "scan_interval": "Scan interval (seconds)"
-        }
-      }
-    }
-  },
+  "options": {"step": {"init": {"description": "How often to poll the Daze backend for updated sensor values.", "data": {"scan_interval": "Scan interval (seconds)"}}}},
   "entity": {
     "sensor": {
-      "power": { "name": "Power" },
-      "session_energy": { "name": "Session energy" },
-      "charging_current_l1": { "name": "Charging current L1" },
-      "charging_current_l2": { "name": "Charging current L2" },
-      "charging_current_l3": { "name": "Charging current L3" },
-      "voltage_l1": { "name": "Voltage L1" },
-      "voltage_l2": { "name": "Voltage L2" },
-      "voltage_l3": { "name": "Voltage L3" },
-      "board_temperature": { "name": "Board temperature" },
-      "case_temperature": { "name": "Case temperature" },
-      "max_charging_current": { "name": "Max charging current" },
-      "status": {
-        "name": "Status",
-        "state": {
-          "unknown": "Unknown",
-          "standby": "Standby",
-          "ev_connected_wait_auth": "Vehicle connected, waiting for authorization",
-          "charging": "Charging",
-          "evse_error": "Error",
-          "ev_connected_authorized": "Vehicle connected, authorized",
-          "ev_connected_wait_power": "Vehicle connected, waiting for power",
-          "preparing": "Preparing",
-          "unavailable": "Unavailable",
-          "finishing": "Finishing",
-          "reserved": "Reserved",
-          "scheduled_pause": "Paused (scheduled)",
-          "smart_tariff_pause": "Paused (smart tariff)"
-        }
-      },
-      "evse_state": {
-        "name": "EVSE state",
-        "state": {
-          "unknown": "Unknown",
-          "standby": "Standby",
-          "ev_connected_wait_auth": "Vehicle connected, waiting for authorization",
-          "charging": "Charging",
-          "evse_error": "Error",
-          "ev_connected_authorized": "Vehicle connected, authorized",
-          "ev_connected_wait_power": "Vehicle connected, waiting for power",
-          "preparing": "Preparing",
-          "unavailable": "Unavailable",
-          "finishing": "Finishing",
-          "reserved": "Reserved",
-          "scheduled_pause": "Paused (scheduled)",
-          "smart_tariff_pause": "Paused (smart tariff)"
-        }
-      },
-      "system_error": {
-        "name": "System error",
-        "state": {
-          "none": "No error",
-          "fault_rcm": "RCM fault",
-          "fault_rcm_test": "RCM self-test fault",
-          "cp_state_e": "Control pilot state E",
-          "fault_contactor": "Contactor fault",
-          "cp_state_invalid": "Invalid control pilot state",
-          "overtemperature": "Overtemperature",
-          "overcurrent": "Overcurrent",
-          "fault_pivot": "Pivot fault",
-          "triggered_rcbo": "RCBO triggered",
-          "evse_not_powered": "EVSE not powered",
-          "board_l1_overtemp": "Board L1 overtemperature"
-        }
-      },
-      "fan_status": { "name": "Fan status" },
-      "wifi_ssid": { "name": "Wi-Fi SSID" },
-      "software_version": { "name": "Software version" },
-      "firmware_version": { "name": "Firmware version" },
-      "grid_current_l1": { "name": "Grid current L1" },
-      "grid_current_l2": { "name": "Grid current L2" },
-      "grid_current_l3": { "name": "Grid current L3" },
-      "tariff": { "name": "Energy tariff" }
-    }
+      "power": {"name": "Power"}, "session_energy": {"name": "Session energy"}, "charging_current_l1": {"name": "Charging current L1"}, "charging_current_l2": {"name": "Charging current L2"}, "charging_current_l3": {"name": "Charging current L3"},
+      "voltage_l1": {"name": "Voltage L1"}, "voltage_l2": {"name": "Voltage L2"}, "voltage_l3": {"name": "Voltage L3"}, "board_temperature": {"name": "Board temperature"}, "case_temperature": {"name": "Case temperature"}, "max_charging_current": {"name": "Max charging current"},
+      "status": {"name": "Status", "state": {"unknown": "Unknown", "standby": "Standby", "ev_connected_wait_auth": "Vehicle connected, waiting for authorization", "charging": "Charging", "evse_error": "Error", "ev_connected_authorized": "Vehicle connected, authorized", "ev_connected_wait_power": "Vehicle connected, waiting for power", "preparing": "Preparing", "unavailable": "Unavailable", "finishing": "Finishing", "reserved": "Reserved", "scheduled_pause": "Paused (scheduled)", "smart_tariff_pause": "Paused (smart tariff)"}},
+      "evse_state": {"name": "EVSE state", "state": {"unknown": "Unknown", "standby": "Standby", "ev_connected_wait_auth": "Vehicle connected, waiting for authorization", "charging": "Charging", "evse_error": "Error", "ev_connected_authorized": "Vehicle connected, authorized", "ev_connected_wait_power": "Vehicle connected, waiting for power", "preparing": "Preparing", "unavailable": "Unavailable", "finishing": "Finishing", "reserved": "Reserved", "scheduled_pause": "Paused (scheduled)", "smart_tariff_pause": "Paused (smart tariff)"}},
+      "system_error": {"name": "System error", "state": {"none": "No error", "fault_rcm": "RCM fault", "fault_rcm_test": "RCM self-test fault", "cp_state_e": "Control pilot state E", "fault_contactor": "Contactor fault", "cp_state_invalid": "Invalid control pilot state", "overtemperature": "Overtemperature", "overcurrent": "Overcurrent", "fault_pivot": "Pivot fault", "triggered_rcbo": "RCBO triggered", "evse_not_powered": "EVSE not powered", "board_l1_overtemp": "Board L1 overtemperature"}},
+      "fan_status": {"name": "Fan status"}, "wifi_ssid": {"name": "Wi-Fi SSID"}, "software_version": {"name": "Software version"}, "firmware_version": {"name": "Firmware version"}, "grid_current_l1": {"name": "Grid current L1"}, "grid_current_l2": {"name": "Grid current L2"}, "grid_current_l3": {"name": "Grid current L3"}, "tariff": {"name": "Energy tariff"}
+    },
+    "number": {"charging_power": {"name": "Charging power"}},
+    "select": {"charging_mode": {"name": "Charging mode", "state": {"standard": "Standard", "auto": "Auto"}}}
   }
 }

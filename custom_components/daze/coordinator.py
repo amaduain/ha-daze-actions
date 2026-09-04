@@ -1,10 +1,4 @@
-"""Data update coordinator for the Daze integration.
-
-One coordinator per config entry (i.e. per Daze account) - see the plan for why this
-is preferred over one coordinator per network: the full fetch tree is cheap even for
-multi-network accounts, and a token failure invalidates the whole account regardless
-of coordinator granularity.
-"""
+"""Data update coordinator for the Daze integration."""
 
 from __future__ import annotations
 
@@ -45,13 +39,11 @@ class DazeCoordinator(DataUpdateCoordinator[DazeAccountData]):
     async def _async_update_data(self) -> DazeAccountData:
         try:
             networks = await self._api.async_get_networks(self._email)
-
             networks_data: dict[str, DazeNetworkData] = {}
             for network in networks:
                 evses = await self._api.async_get_network_evses(network.uid)
                 await self._async_fill_socket_remote_info(evses)
                 networks_data[network.uid] = DazeNetworkData(network=network, evses=evses)
-
             return DazeAccountData(identity_id=self._identity_id, networks=networks_data)
         except ConfigEntryAuthFailed:
             raise
@@ -70,14 +62,17 @@ class DazeCoordinator(DataUpdateCoordinator[DazeAccountData]):
         sockets = [socket for evse in evses for socket in evse.sockets]
         if not sockets:
             return
-
-        # return_exceptions=True so a single failing socket does not leave its siblings
-        # running detached: a bare gather() propagates the first exception immediately
-        # without cancelling the rest, and those orphans then surface as "Task exception
-        # was never retrieved" in the log long after the update was abandoned.
         results = await asyncio.gather(
             *(_fetch(socket) for socket in sockets), return_exceptions=True
         )
         for result in results:
             if isinstance(result, BaseException):
                 raise result
+
+    async def async_set_max_charging_current(self, evse_serial: str, milliamps: int) -> None:
+        """Set the EVSE maximum external charging current."""
+        await self._api.async_set_max_charging_current(evse_serial, milliamps)
+
+    async def async_set_recharge_modality(self, evse_serial: str, mode: int) -> None:
+        """Set the EVSE recharge modality."""
+        await self._api.async_set_recharge_modality(evse_serial, mode)
