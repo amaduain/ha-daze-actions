@@ -32,6 +32,7 @@ def _ma_to_kw(milliamps: int | None) -> float | None:
 
 
 def _kw_to_ma(power_kw: float) -> int:
+    # Keep the same conversion used by the supplied working Daze script.
     amps = (power_kw * 1000) / 230
     return round(amps * 1000)
 
@@ -49,7 +50,7 @@ async def async_setup_entry(
 
 
 class DazeChargingPowerNumber(DazeEvseEntity, NumberEntity):
-    """Set the maximum external charging power of an EVSE."""
+    """Set and display the live maximum external charging power."""
 
     _attr_translation_key = "charging_power"
     _attr_device_class = NumberDeviceClass.POWER
@@ -76,7 +77,11 @@ class DazeChargingPowerNumber(DazeEvseEntity, NumberEntity):
         if evse is None:
             return None
         socket = _primary_socket(evse)
-        return _ma_to_kw(socket.last_max_charging_current) if socket is not None else None
+        if socket is None:
+            return None
+        # apply_remote_info() copies the live web-service value into
+        # last_max_charging_current, so this is refreshed with the coordinator.
+        return _ma_to_kw(socket.last_max_charging_current)
 
     async def async_set_native_value(self, value: float) -> None:
         await self.coordinator.async_set_max_charging_current(
