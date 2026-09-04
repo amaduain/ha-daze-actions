@@ -15,7 +15,11 @@ MODE_STANDARD = "Standard"
 MODE_AUTO = "Auto"
 MODE_OPTIONS = [MODE_STANDARD, MODE_AUTO]
 MODE_TO_API = {MODE_STANDARD: RECHARGE_MODALITY_STANDARD, MODE_AUTO: RECHARGE_MODALITY_SELFCONSUMPTION}
-API_TO_MODE = {value: key for key, value in MODE_TO_API.items()}
+
+# GET /v3/evses/{serial} returns network.rechargeModality using a zero-based
+# representation: 0 = Standard, 1 = Auto. This is intentionally separate from
+# the values required by the write endpoint (1 = Standard, 2 = Auto).
+GET_MODality_TO_MODE = {0: MODE_STANDARD, 1: MODE_AUTO}
 
 
 async def async_setup_entry(
@@ -31,11 +35,7 @@ async def async_setup_entry(
 
 
 class DazeChargingModeSelect(DazeEvseEntity, SelectEntity):
-    """Select the Daze recharge modality (standard vs self-consumption).
-
-    Current value is read from ``rechargeModality`` on GET /v3/evses/{serial}
-    (1 = Standard, 2 = Auto / self-consumption).
-    """
+    """Select the Daze recharge modality (standard vs self-consumption)."""
 
     _attr_translation_key = "charging_mode"
     _attr_options = MODE_OPTIONS
@@ -52,7 +52,7 @@ class DazeChargingModeSelect(DazeEvseEntity, SelectEntity):
         evse = self._evse
         if evse is None:
             return None
-        return API_TO_MODE.get(evse.recharge_modality)
+        return GET_MODality_TO_MODE.get(evse.recharge_modality)
 
     async def async_select_option(self, option: str) -> None:
         await self.coordinator.async_set_recharge_modality(
