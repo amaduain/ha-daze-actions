@@ -110,16 +110,7 @@ class DazeApiClient:
             json={"newRechargeModality": mode, "sendRpcToDevice": True},
         )
 
-    async def async_set_max_charging_power(self, evse_serial: str, power_kw: float) -> None:
-        """Set maximum charging power, converted to the Daze mA current limit."""
-        three_phase = None
-        # The API endpoint takes current, while the UI exposes power. The caller supplies
-        # the number of phases so conversion can be performed against the installation.
-        raise RuntimeError("async_set_max_charging_power requires phase information")
-
-    async def async_set_max_charging_current(
-        self, evse_serial: str, milliamps: int
-    ) -> None:
+    async def async_set_max_charging_current(self, evse_serial: str, milliamps: int) -> None:
         """Set maximum external charging current in milliamps."""
         await self._request(
             "POST",
