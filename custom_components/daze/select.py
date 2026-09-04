@@ -10,7 +10,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .api import RECHARGE_MODALITY_SELFCONSUMPTION, RECHARGE_MODALITY_STANDARD
 from .const import DOMAIN
 from .entity import DazeEvseEntity, evse_device_info
-from .models import DazeEvse
 
 MODE_STANDARD = "Standard"
 MODE_AUTO = "Auto"
@@ -20,13 +19,6 @@ MODE_TO_API = {
     MODE_AUTO: RECHARGE_MODALITY_SELFCONSUMPTION,
 }
 API_TO_MODE = {value: key for key, value in MODE_TO_API.items()}
-
-
-def _primary_socket(evse: DazeEvse):
-    return next(
-        (socket for socket in evse.sockets if socket.is_primary),
-        evse.sockets[0] if evse.sockets else None,
-    )
 
 
 async def async_setup_entry(
@@ -42,7 +34,11 @@ async def async_setup_entry(
 
 
 class DazeChargingModeSelect(DazeEvseEntity, SelectEntity):
-    """Select the Daze recharge modality."""
+    """Select the Daze recharge modality (standard vs self-consumption).
+
+    Current value is read from ``rechargeModality`` on GET /v3/evses/{serial}
+    (1 = Standard, 2 = Auto / self-consumption).
+    """
 
     _attr_translation_key = "charging_mode"
     _attr_options = MODE_OPTIONS
@@ -59,10 +55,7 @@ class DazeChargingModeSelect(DazeEvseEntity, SelectEntity):
         evse = self._evse
         if evse is None:
             return None
-        socket = _primary_socket(evse)
-        if socket is None:
-            return None
-        return API_TO_MODE.get(socket.operation_mode)
+        return API_TO_MODE.get(evse.recharge_modality)
 
     async def async_select_option(self, option: str) -> None:
         await self.coordinator.async_set_recharge_modality(

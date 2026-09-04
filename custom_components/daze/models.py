@@ -140,6 +140,9 @@ class DazeEvse:
     last_supply_grid_instant_current_l2: int | None  # mA
     last_supply_grid_instant_current_l3: int | None  # mA
     sockets: list[DazeSocket] = field(default_factory=list)
+    # Populated from GET /v3/evses/{serial} (rechargeModality).
+    # 1 = standard, 2 = self-consumption (auto).
+    recharge_modality: int | None = None
 
     @classmethod
     def from_dict(cls, raw: dict) -> DazeEvse:
@@ -157,9 +160,14 @@ class DazeEvse:
             last_supply_grid_instant_current_l2=raw.get("lastSupplyGridInstantCurrentL2"),
             last_supply_grid_instant_current_l3=raw.get("lastSupplyGridInstantCurrentL3"),
             sockets=[DazeSocket.from_dict(s) for s in raw.get("sockets", [])],
+            # Present when the payload comes from GET /v3/evses/{serial};
+            # usually absent from the network list endpoint.
+            recharge_modality=raw.get("rechargeModality"),
         )
-
-
+    def apply_evse_details(self, raw: dict) -> None:
+        """Merge fields from GET /v3/evses/{serial} (e.g. rechargeModality)."""
+        if "rechargeModality" in raw:
+            self.recharge_modality = raw.get("rechargeModality")
 @dataclass
 class DazeNetworkData:
     network: DazeNetwork

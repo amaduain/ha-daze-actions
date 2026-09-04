@@ -50,6 +50,27 @@ class DazeCoordinator(DataUpdateCoordinator[DazeAccountData]):
         except DazeCannotConnectError as err:
             raise UpdateFailed(str(err)) from err
 
+    async def _async_fill_evse_details(self, evses) -> None:
+        """Enrich each EVSE with fields only available on GET /v3/evses/{serial}
+        (notably rechargeModality used by the charging-mode select).
+        """
+        if not evses:
+            return
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_SOCKET_REQUESTS)
+
+        async def _fetch(evse) -> None:
+            async with semaphore:
+                details = await self._api.async_get_evse(evse.serial_number)
+                if details is not None:
+                    evse.apply_evse_details(details)
+
+        results = await asyncio.gather(
+            *(_fetch(evse) for evse in evses), return_exceptions=True
+        )
+        for result in results:
+            if isinstance(result, BaseException):
+                raise result
+            
     async def _async_fill_socket_remote_info(self, evses) -> None:
         semaphore = asyncio.Semaphore(MAX_CONCURRENT_SOCKET_REQUESTS)
 
