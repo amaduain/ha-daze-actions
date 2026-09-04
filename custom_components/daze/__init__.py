@@ -14,7 +14,7 @@ from .auth import CognitoDirectAuthStrategy, DazeAuth, TokenSet
 from .const import CONF_SCAN_INTERVAL, CONF_TOKEN, DEFAULT_SCAN_INTERVAL, DOMAIN
 from .coordinator import DazeCoordinator
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.NUMBER, Platform.SELECT]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -57,22 +57,12 @@ def _scan_interval(entry: ConfigEntry) -> timedelta:
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Apply an entry update in place - never reload from here.
-
-    This listener fires on *any* async_update_entry, including the token refresh
-    persisted by _async_persist_tokens roughly every 55 min (3600s token lifetime
-    minus TOKEN_REFRESH_LEEWAY_SECONDS). Reloading the entry there tore down and
-    rebuilt every device/entity, so all sensors flickered to `unavailable` for
-    about a second on each token refresh. The only user-configurable setting is
-    the scan interval, which the coordinator can adopt live.
-    """
+    """Apply an entry update in place - never reload from here."""
     coordinator: DazeCoordinator = hass.data[DOMAIN][entry.entry_id]
     scan_interval = _scan_interval(entry)
     if coordinator.update_interval == scan_interval:
         return
     coordinator.update_interval = scan_interval
-    # The setter alone doesn't touch the already-scheduled timer; refreshing now
-    # reschedules the next poll with the new interval.
     await coordinator.async_request_refresh()
 
 
