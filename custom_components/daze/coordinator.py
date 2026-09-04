@@ -42,8 +42,17 @@ class DazeCoordinator(DataUpdateCoordinator[DazeAccountData]):
             networks_data: dict[str, DazeNetworkData] = {}
             for network in networks:
                 evses = await self._api.async_get_network_evses(network.uid)
+
+                # The network EVSE list contains the normal telemetry, but the
+                # current control configuration is exposed by GET /v3/evses/{serial}.
+                # Fetch it on every coordinator refresh so the number/select entities
+                # are populated immediately at startup and remain in sync with Daze.
+                await self._async_fill_evse_details(evses)
                 await self._async_fill_socket_remote_info(evses)
-                networks_data[network.uid] = DazeNetworkData(network=network, evses=evses)
+
+                networks_data[network.uid] = DazeNetworkData(
+                    network=network, evses=evses
+                )
             return DazeAccountData(identity_id=self._identity_id, networks=networks_data)
         except ConfigEntryAuthFailed:
             raise
@@ -51,9 +60,7 @@ class DazeCoordinator(DataUpdateCoordinator[DazeAccountData]):
             raise UpdateFailed(str(err)) from err
 
     async def _async_fill_evse_details(self, evses) -> None:
-        """Enrich each EVSE with fields only available on GET /v3/evses/{serial}
-        (notably rechargeModality used by the charging-mode select).
-        """
+        """Enrich EVSEs with the live control configuration from GET /v3/evses/{serial}."""
         if not evses:
             return
         semaphore = asyncio.Semaphore(MAX_CONCURRENT_SOCKET_REQUESTS)
@@ -70,13 +77,15 @@ class DazeCoordinator(DataUpdateCoordinator[DazeAccountData]):
         for result in results:
             if isinstance(result, BaseException):
                 raise result
-            
+
     async def _async_fill_socket_remote_info(self, evses) -> None:
         semaphore = asyncio.Semaphore(MAX_CONCURRENT_SOCKET_REQUESTS)
 
         async def _fetch(socket) -> None:
             async with semaphore:
-                remote_info = await self._api.async_get_socket_remote_info(socket.serial_number)
+                remote_info = await self._api.async_get_socket_remote_info(
+                    socket.serial_number
+                )
                 if remote_info is not None:
                     socket.apply_remote_info(remote_info)
 
@@ -90,7 +99,9 @@ class DazeCoordinator(DataUpdateCoordinator[DazeAccountData]):
             if isinstance(result, BaseException):
                 raise result
 
-    async def async_set_max_charging_current(self, evse_serial: str, milliamps: int) -> None:
+    async def async_set_max_charging_current(
+        self, evse_serial: str, milliamps: int
+    ) -> None:
         """Set the EVSE maximum external charging current."""
         await self._api.async_set_max_charging_current(evse_serial, milliamps)
 
