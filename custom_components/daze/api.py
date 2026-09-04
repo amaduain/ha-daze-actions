@@ -16,10 +16,13 @@ from .models import DazeEvse, DazeNetwork
 
 _LOGGER = logging.getLogger(__name__)
 
-# Daze API rechargeModality values.
-# 0 = Standard, 1 = Auto / self-consumption.
-RECHARGE_MODALITY_STANDARD = 0
-RECHARGE_MODALITY_SELFCONSUMPTION = 1
+# Daze API rechargeModality values used when writing to the backend.
+# IMPORTANT: the GET /v3/evses/{serial} response uses a different zero-based
+# representation in network.rechargeModality:
+#   GET 0 = Standard, 1 = Auto / self-consumption
+#   PUT 1 = Standard, 2 = Auto / self-consumption
+RECHARGE_MODALITY_STANDARD = 1
+RECHARGE_MODALITY_SELFCONSUMPTION = 2
 
 
 class DazeApiClient:
@@ -109,7 +112,7 @@ class DazeApiClient:
         return await self._request("GET", f"/v3/evses/{evse_serial}")
 
     async def async_set_recharge_modality(self, evse_serial: str, mode: int) -> None:
-        """Set the Daze recharge modality: 0=standard, 1=self-consumption."""
+        """Set the Daze recharge modality: 1=standard, 2=self-consumption."""
         await self._request(
             "PUT",
             f"/v3/evses/{evse_serial}/rechargeModality",
