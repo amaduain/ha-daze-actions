@@ -154,9 +154,9 @@ class DazeEvse:
             last_supply_grid_instant_current_l2=raw.get("lastSupplyGridInstantCurrentL2"),
             last_supply_grid_instant_current_l3=raw.get("lastSupplyGridInstantCurrentL3"),
             sockets=[DazeSocket.from_dict(s) for s in raw.get("sockets", [])],
-            recharge_modality=_first_int(raw, "rechargeModality", "currentRechargeModality")
-            if _first_int(raw, "rechargeModality", "currentRechargeModality") is not None
-            else _first_int(raw.get("network") or {}, "rechargeModality", "currentRechargeModality"),
+            recharge_modality=_first_int(raw, "networkRechargeModality", "currentRechargeModality")
+            if _first_int(raw, "networkRechargeModality", "currentRechargeModality") is not None
+            else _first_int(raw.get("network") or {}, "networkRechargeModality", "currentRechargeModality"),
             max_external_charging_current=_first_int(
                 raw, "maxExternalChargingCurrentInMilliAmps", "maxChargingCurrentInMilliAmps"
             ),
@@ -166,9 +166,9 @@ class DazeEvse:
         """Merge live control configuration from GET /v3/evses/{serial}."""
         network = raw.get("network") or {}
 
-        modality = _first_int(raw, "rechargeModality", "currentRechargeModality")
+        modality = _first_int(raw, "networkRechargeModality", "currentRechargeModality")
         if modality is None:
-            modality = _first_int(network, "rechargeModality", "currentRechargeModality")
+            modality = _first_int(network, "networkRechargeModality", "currentRechargeModality")
         if modality is not None:
             self.recharge_modality = modality
 
