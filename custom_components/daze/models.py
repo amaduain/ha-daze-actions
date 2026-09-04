@@ -113,13 +113,11 @@ class DazeSocket:
             "maxChargingCurrent",
         )
         self.remote_recharge_modality = _first_int(
-            raw, "rechargeModality", "currentRechargeModality", "operationMode"
+            raw, "rechargeModality", "currentRechargeModality"
         )
 
         if self.remote_max_charging_current is not None:
             self.last_max_charging_current = self.remote_max_charging_current
-        if self.remote_recharge_modality is not None:
-            self.operation_mode = self.remote_recharge_modality
 
 
 def _first_int(raw: dict, *keys: str) -> int | None:
@@ -148,8 +146,9 @@ class DazeEvse:
     last_supply_grid_instant_current_l2: int | None
     last_supply_grid_instant_current_l3: int | None
     sockets: list[DazeSocket] = field(default_factory=list)
-    # Live control configuration fetched from GET /v3/evses/{serial}.
-    # 1 = standard, 2 = self-consumption (auto).
+    # Live recharge modality fetched from GET /v3/evses/{serial}.
+    # The API places this value inside the nested network object:
+    # network.rechargeModality (1 = standard, 2 = self-consumption/auto).
     recharge_modality: int | None = None
 
     @classmethod
@@ -164,12 +163,25 @@ class DazeEvse:
             last_supply_grid_instant_current_l2=raw.get("lastSupplyGridInstantCurrentL2"),
             last_supply_grid_instant_current_l3=raw.get("lastSupplyGridInstantCurrentL3"),
             sockets=[DazeSocket.from_dict(s) for s in raw.get("sockets", [])],
-            recharge_modality=_first_int(raw, "rechargeModality", "currentRechargeModality"),
+            recharge_modality=_first_int(
+                raw, "rechargeModality", "currentRechargeModality"
+            )
+            or _first_int(
+                raw.get("network") or {},
+                "rechargeModality", "currentRechargeModality"
+            ),
         )
 
     def apply_evse_details(self, raw: dict) -> None:
         """Merge live configuration from GET /v3/evses/{serial}."""
-        modality = _first_int(raw, "rechargeModality", "currentRechargeModality")
+        network = raw.get("network") or {}
+        modality = _first_int(
+            raw, "rechargeModality", "currentRechargeModality"
+        )
+        if modality is None:
+            modality = _first_int(
+                network, "rechargeModality", "currentRechargeModality"
+            )
         if modality is not None:
             self.recharge_modality = modality
 
