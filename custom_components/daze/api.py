@@ -16,8 +16,10 @@ from .models import DazeEvse, DazeNetwork
 
 _LOGGER = logging.getLogger(__name__)
 
-RECHARGE_MODALITY_STANDARD = 1
-RECHARGE_MODALITY_SELFCONSUMPTION = 2
+# Daze API rechargeModality values.
+# 0 = Standard, 1 = Auto / self-consumption.
+RECHARGE_MODALITY_STANDARD = 0
+RECHARGE_MODALITY_SELFCONSUMPTION = 1
 
 
 class DazeApiClient:
@@ -101,13 +103,13 @@ class DazeApiClient:
             f"/v3/sockets/{serial_number}/remoteInfo",
             params={"includeEcoInfo": "true", "includeNextSchedule": "true"},
         )
-    
+
     async def async_get_evse(self, evse_serial: str) -> dict[str, Any] | None:
         """Fetch a single EVSE (includes rechargeModality)."""
         return await self._request("GET", f"/v3/evses/{evse_serial}")
-    
+
     async def async_set_recharge_modality(self, evse_serial: str, mode: int) -> None:
-        """Set the Daze recharge modality: 1=standard, 2=self-consumption."""
+        """Set the Daze recharge modality: 0=standard, 1=self-consumption."""
         await self._request(
             "PUT",
             f"/v3/evses/{evse_serial}/rechargeModality",
