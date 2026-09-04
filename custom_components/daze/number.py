@@ -19,7 +19,10 @@ CHARGING_POWER_STEP_KW = 0.1
 
 
 def _primary_socket(evse: DazeEvse):
-    return next((socket for socket in evse.sockets if socket.is_primary), evse.sockets[0] if evse.sockets else None)
+    return next(
+        (socket for socket in evse.sockets if socket.is_primary),
+        evse.sockets[0] if evse.sockets else None,
+    )
 
 
 def _ma_to_kw(milliamps: int | None, three_phase: bool) -> float | None:
@@ -28,6 +31,12 @@ def _ma_to_kw(milliamps: int | None, three_phase: bool) -> float | None:
     amps = milliamps / 1000
     phases = 3 if three_phase else 1
     return amps * 230 * phases / 1000
+
+
+def _kw_to_ma(power_kw: float, three_phase: bool) -> int:
+    phases = 3 if three_phase else 1
+    amps = (power_kw * 1000) / (230 * phases)
+    return round(amps * 1000)
 
 
 async def async_setup_entry(
@@ -75,5 +84,9 @@ class DazeChargingPowerNumber(DazeEvseEntity, NumberEntity):
         return _ma_to_kw(socket.last_max_charging_current, evse.evse_is_three_phase)
 
     async def async_set_native_value(self, value: float) -> None:
-        await self.coordinator.async_set_max_charging_power(self._evse_serial, value)
+        evse = self._evse
+        if evse is None:
+            return
+        milliamps = _kw_to_ma(value, evse.evse_is_three_phase)
+        await self.coordinator.async_set_max_charging_current(self._evse_serial, milliamps)
         await self.coordinator.async_request_refresh()
