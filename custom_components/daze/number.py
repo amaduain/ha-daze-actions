@@ -18,13 +18,6 @@ MAX_CHARGING_POWER_KW_THREE_PHASE = 22.0
 CHARGING_POWER_STEP_KW = 0.1
 
 
-def _primary_socket(evse: DazeEvse):
-    return next(
-        (socket for socket in evse.sockets if socket.is_primary),
-        evse.sockets[0] if evse.sockets else None,
-    )
-
-
 def _ma_to_kw(milliamps: int | None) -> float | None:
     if milliamps is None:
         return None
@@ -76,12 +69,10 @@ class DazeChargingPowerNumber(DazeEvseEntity, NumberEntity):
         evse = self._evse
         if evse is None:
             return None
-        socket = _primary_socket(evse)
-        if socket is None:
-            return None
-        # apply_remote_info() copies the live web-service value into
-        # last_max_charging_current, so this is refreshed with the coordinator.
-        return _ma_to_kw(socket.last_max_charging_current)
+        # This value comes directly from GET /v3/evses/{serial} and is therefore
+        # not confused with lastMaxChargingCurrent, which is instantaneous/status
+        # telemetry and may legitimately be 0 when the EVSE is idle.
+        return _ma_to_kw(evse.max_external_charging_current)
 
     async def async_set_native_value(self, value: float) -> None:
         await self.coordinator.async_set_max_charging_current(
