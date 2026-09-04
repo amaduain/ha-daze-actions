@@ -15,10 +15,7 @@ from .models import DazeEvse
 MODE_STANDARD = "Standard"
 MODE_AUTO = "Auto"
 MODE_OPTIONS = [MODE_STANDARD, MODE_AUTO]
-MODE_TO_API = {
-    MODE_STANDARD: RECHARGE_MODALITY_STANDARD,
-    MODE_AUTO: RECHARGE_MODALITY_SELFCONSUMPTION,
-}
+MODE_TO_API = {MODE_STANDARD: RECHARGE_MODALITY_STANDARD, MODE_AUTO: RECHARGE_MODALITY_SELFCONSUMPTION}
 API_TO_MODE = {value: key for key, value in MODE_TO_API.items()}
 
 
@@ -42,7 +39,7 @@ async def async_setup_entry(
 
 
 class DazeChargingModeSelect(DazeEvseEntity, SelectEntity):
-    """Select the Daze recharge modality."""
+    """Select and display the live Daze recharge modality."""
 
     _attr_translation_key = "charging_mode"
     _attr_options = MODE_OPTIONS
@@ -62,6 +59,8 @@ class DazeChargingModeSelect(DazeEvseEntity, SelectEntity):
         socket = _primary_socket(evse)
         if socket is None:
             return None
+        # operation_mode is populated from the live remoteInfo response when
+        # the coordinator starts and on every subsequent coordinator refresh.
         return API_TO_MODE.get(socket.operation_mode)
 
     async def async_select_option(self, option: str) -> None:
