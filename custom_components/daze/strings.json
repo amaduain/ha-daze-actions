@@ -44,9 +44,33 @@
       "board_temperature": {"name": "Board temperature"},
       "case_temperature": {"name": "Case temperature"},
       "max_charging_current": {"name": "Max charging current"},
-      "status": {"name": "Status"},
-      "evse_state": {"name": "EVSE state"},
-      "system_error": {"name": "System error"},
+      "status": {
+        "name": "Status",
+        "state": {
+          "unknown": "Unknown", "standby": "Standby", "ev_connected_wait_auth": "Vehicle connected, waiting for authorization",
+          "charging": "Charging", "evse_error": "Error", "ev_connected_authorized": "Vehicle connected, authorized",
+          "ev_connected_wait_power": "Vehicle connected, waiting for power", "preparing": "Preparing", "unavailable": "Unavailable",
+          "finishing": "Finishing", "reserved": "Reserved", "scheduled_pause": "Paused (scheduled)", "smart_tariff_pause": "Paused (smart tariff)"
+        }
+      },
+      "evse_state": {
+        "name": "EVSE state",
+        "state": {
+          "unknown": "Unknown", "standby": "Standby", "ev_connected_wait_auth": "Vehicle connected, waiting for authorization",
+          "charging": "Charging", "evse_error": "Error", "ev_connected_authorized": "Vehicle connected, authorized",
+          "ev_connected_wait_power": "Vehicle connected, waiting for power", "preparing": "Preparing", "unavailable": "Unavailable",
+          "finishing": "Finishing", "reserved": "Reserved", "scheduled_pause": "Paused (scheduled)", "smart_tariff_pause": "Paused (smart tariff)"
+        }
+      },
+      "system_error": {
+        "name": "System error",
+        "state": {
+          "none": "No error", "fault_rcm": "RCM fault", "fault_rcm_test": "RCM self-test fault", "cp_state_e": "Control pilot state E",
+          "fault_contactor": "Contactor fault", "cp_state_invalid": "Invalid control pilot state", "overtemperature": "Overtemperature",
+          "overcurrent": "Overcurrent", "fault_pivot": "Pivot fault", "triggered_rcbo": "RCBO triggered",
+          "evse_not_powered": "EVSE not powered", "board_l1_overtemp": "Board L1 overtemperature"
+        }
+      },
       "fan_status": {"name": "Fan status"},
       "wifi_ssid": {"name": "Wi-Fi SSID"},
       "software_version": {"name": "Software version"},
@@ -56,16 +80,11 @@
       "grid_current_l3": {"name": "Grid current L3"},
       "tariff": {"name": "Energy tariff"}
     },
-    "number": {
-      "charging_power": {"name": "Charging power"}
-    },
+    "number": {"charging_power": {"name": "Charging power"}},
     "select": {
       "charging_mode": {
         "name": "Charging mode",
-        "state": {
-          "standard": "Standard",
-          "auto": "Auto"
-        }
+        "state": {"standard": "Standard", "auto": "Auto"}
       }
     }
   }
