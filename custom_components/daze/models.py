@@ -1,10 +1,4 @@
-"""Lightweight data models for the Daze backend.
-
-These mirror the shape of the (undocumented, reverse-engineered) REST responses from
-webapi.dazeservice.com just closely enough to serve the v1 sensor set. Unknown/unused
-fields in the raw payloads are simply ignored rather than modeled - do not try to
-capture every field the vendor's app happens to use internally.
-"""
+"""Lightweight data models for the Daze backend."""
 
 from __future__ import annotations
 
@@ -98,7 +92,7 @@ class DazeSocket:
         )
 
     def apply_remote_info(self, raw: dict) -> None:
-        """Merge live state returned by GET /v3/sockets/{serial}/remoteInfo."""
+        """Merge live telemetry returned by GET /v3/sockets/{serial}/remoteInfo."""
         self.evse_state = raw.get("evseState")
         self.evse_suspension_reason = raw.get("evseSuspensionReason")
         self.evse_system_error = raw.get("evseSystemError")
@@ -115,9 +109,6 @@ class DazeSocket:
         self.remote_recharge_modality = _first_int(
             raw, "rechargeModality", "currentRechargeModality"
         )
-
-        if self.remote_max_charging_current is not None:
-            self.last_max_charging_current = self.remote_max_charging_current
 
 
 def _first_int(raw: dict, *keys: str) -> int | None:
@@ -146,10 +137,10 @@ class DazeEvse:
     last_supply_grid_instant_current_l2: int | None
     last_supply_grid_instant_current_l3: int | None
     sockets: list[DazeSocket] = field(default_factory=list)
-    # Live recharge modality fetched from GET /v3/evses/{serial}.
-    # The API places this value inside the nested network object:
-    # network.rechargeModality (1 = standard, 2 = self-consumption/auto).
+    # Live control configuration from GET /v3/evses/{serial}.
+    # The API returns rechargeModality inside the nested network object.
     recharge_modality: int | None = None
+    max_external_charging_current: int | None = None
 
     @classmethod
     def from_dict(cls, raw: dict) -> DazeEvse:
@@ -163,40 +154,34 @@ class DazeEvse:
             last_supply_grid_instant_current_l2=raw.get("lastSupplyGridInstantCurrentL2"),
             last_supply_grid_instant_current_l3=raw.get("lastSupplyGridInstantCurrentL3"),
             sockets=[DazeSocket.from_dict(s) for s in raw.get("sockets", [])],
-            recharge_modality=_first_int(
-                raw, "rechargeModality", "currentRechargeModality"
-            )
-            or _first_int(
-                raw.get("network") or {},
-                "rechargeModality", "currentRechargeModality"
+            recharge_modality=_first_int(raw, "rechargeModality", "currentRechargeModality")
+            if _first_int(raw, "rechargeModality", "currentRechargeModality") is not None
+            else _first_int(raw.get("network") or {}, "rechargeModality", "currentRechargeModality"),
+            max_external_charging_current=_first_int(
+                raw, "maxExternalChargingCurrentInMilliAmps", "maxChargingCurrentInMilliAmps"
             ),
         )
 
     def apply_evse_details(self, raw: dict) -> None:
-        """Merge live configuration from GET /v3/evses/{serial}."""
+        """Merge live control configuration from GET /v3/evses/{serial}."""
         network = raw.get("network") or {}
-        modality = _first_int(
-            raw, "rechargeModality", "currentRechargeModality"
-        )
+
+        modality = _first_int(raw, "rechargeModality", "currentRechargeModality")
         if modality is None:
-            modality = _first_int(
-                network, "rechargeModality", "currentRechargeModality"
-            )
+            modality = _first_int(network, "rechargeModality", "currentRechargeModality")
         if modality is not None:
             self.recharge_modality = modality
 
-        # The web service exposes the configured maximum current in the EVSE
-        # response. Keep it on the primary socket so the HA number entity can
-        # use the same live value as the existing current sensor.
         max_current = _first_int(
             raw,
             "maxExternalChargingCurrentInMilliAmps",
             "maxChargingCurrentInMilliAmps",
-            "maxExternalChargingCurrent",
-            "maxChargingCurrent",
-            "lastMaxChargingCurrent",
         )
         if max_current is not None:
+            self.max_external_charging_current = max_current
+
+            # Keep the existing socket field updated as well, so the existing
+            # max-current sensor continues to reflect the configured value.
             socket = next(
                 (s for s in self.sockets if s.is_primary),
                 self.sockets[0] if self.sockets else None,
