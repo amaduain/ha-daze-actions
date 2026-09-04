@@ -101,7 +101,11 @@ class DazeApiClient:
             f"/v3/sockets/{serial_number}/remoteInfo",
             params={"includeEcoInfo": "true", "includeNextSchedule": "true"},
         )
-
+    
+    async def async_get_evse(self, evse_serial: str) -> dict[str, Any] | None:
+        """Fetch a single EVSE (includes rechargeModality)."""
+        return await self._request("GET", f"/v3/evses/{evse_serial}")
+    
     async def async_set_recharge_modality(self, evse_serial: str, mode: int) -> None:
         """Set the Daze recharge modality: 1=standard, 2=self-consumption."""
         await self._request(
