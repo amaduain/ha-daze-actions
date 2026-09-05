@@ -108,3 +108,11 @@ class DazeCoordinator(DataUpdateCoordinator[DazeAccountData]):
     async def async_set_recharge_modality(self, evse_serial: str, mode: int) -> None:
         """Set the EVSE recharge modality."""
         await self._api.async_set_recharge_modality(evse_serial, mode)
+
+    async def async_stop_charge(self, serial_number: str) -> None:
+        """Pause the current charging session."""
+        await self._api.async_stop_charge(serial_number)
+
+    async def async_play_charge(self, serial_number: str) -> None:
+        """Resume the current charging session."""
+        await self._api.async_play_charge(serial_number)
