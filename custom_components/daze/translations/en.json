@@ -18,6 +18,7 @@
       "fan_status": {"name": "Fan status"}, "wifi_ssid": {"name": "Wi-Fi SSID"}, "software_version": {"name": "Software version"}, "firmware_version": {"name": "Firmware version"}, "grid_current_l1": {"name": "Grid current L1"}, "grid_current_l2": {"name": "Grid current L2"}, "grid_current_l3": {"name": "Grid current L3"}, "tariff": {"name": "Energy tariff"}
     },
     "number": {"charging_power": {"name": "Charging power"}},
-    "select": {"charging_mode": {"name": "Charging mode", "state": {"standard": "Standard", "auto": "Auto"}}}
+    "select": {"charging_mode": {"name": "Charging mode", "state": {"standard": "Standard", "auto": "Auto"}}},
+    "button": {"pause": {"name": "Pause charging"}, "resume": {"name": "Resume charging"}}
   }
 }
