@@ -71,6 +71,11 @@ class DazeApiClient:
                     if resp.content_length == 0:
                         return None
                     payload = await resp.json()
+                    errors = payload.get("errors") or []
+                    if errors:
+                        raise DazeCannotConnectError(
+                            f"{method} {path} returned errors: {errors}"
+                        )
                     return payload.get("data")
             except TimeoutError as err:
                 if retries_left:
@@ -128,4 +133,16 @@ class DazeApiClient:
                 "evseSerialNumber": evse_serial,
                 "maxExternalChargingCurrentInMilliAmps": milliamps,
             },
+        )
+
+    async def async_stop_charge(self, serial_number: str) -> None:
+        """Pause the current charging session."""
+        await self._request(
+            "POST", f"/v3/sockets/{serial_number}/commands/stopcharge"
+        )
+
+    async def async_play_charge(self, serial_number: str) -> None:
+        """Resume the current charging session."""
+        await self._request(
+            "POST", f"/v3/sockets/{serial_number}/commands/playcharge"
         )
